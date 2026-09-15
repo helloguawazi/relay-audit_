@@ -1,0 +1,124 @@
+# Canonical model catalogue.
+#
+# Every model that appears in a published price table must be declared here.
+# Anything a provider offers that matches no entry is reported as "unmatched"
+# rather than being silently dropped, so that coverage gaps stay visible.
+#
+# `match` patterns are globs evaluated against a normalised model id. Because
+# normalisation folds spaces and dots to hyphens, one pattern covers all the
+# shapes relays publish:
+#
+#     'claude-opus-4.8'  matches  'claude-opus-4.8', 'Claude Opus 4.8',
+#                                 'anthropic/claude-opus-4-8'
+#
+# Patterns must be tight. A loose 'claude-opus-*' would fold Opus 4.6, 4.7, 4.8
+# and 5 into one row even though their prices differ, which would silently
+# misreport every platform. Version numbers are therefore always pinned.
+#
+# `aliases` are checked before `match`, so an exact entry can never be shadowed
+# by a broader wildcard.
+#
+# official_* are reference rates in USD per 1,000,000 tokens. Both `source` and
+# `retrieved` are mandatory on any entry that has them: a rate without a source
+# and a date is a rumour, and the table generator flags it.
+
+[claude-sonnet-5]
+display = "Claude Sonnet 5"
+match = ["claude-sonnet-5"]
+official_input = 2.00
+official_output = 10.00
+official_cache_read = 0.20
+official_cache_write = 2.50
+context = "1M"
+source = "https://openrouter.ai/api/v1/models (anthropic/claude-sonnet-5)"
+retrieved = "2026-09-15"
+
+[claude-sonnet-4-6]
+display = "Claude Sonnet 4.6"
+match = ["claude-sonnet-4.6"]
+official_input = 2.00
+official_output = 10.00
+official_cache_read = 0.20
+official_cache_write = 2.50
+context = "1M"
+source = "https://openrouter.ai/api/v1/models (anthropic/claude-sonnet-5); same family and tier"
+retrieved = "2026-09-15"
+note = "官方基准取同族同档价。如该型号有独立官方定价，请更正此处并回归。"
+
+[claude-opus-5]
+display = "Claude Opus 5"
+match = ["claude-opus-5"]
+official_input = 5.00
+official_output = 25.00
+official_cache_read = 0.50
+official_cache_write = 6.25
+context = "1M"
+source = "https://openrouter.ai/api/v1/models (anthropic/claude-opus-5)"
+retrieved = "2026-09-15"
+
+[claude-opus-4-8]
+display = "Claude Opus 4.8"
+match = ["claude-opus-4.8"]
+official_input = 5.00
+official_output = 25.00
+official_cache_read = 0.50
+context = "1M"
+source = "https://openrouter.ai/api/v1/models (anthropic/claude-opus-5); same tier"
+retrieved = "2026-09-15"
+note = "官方基准取同档价。如该型号有独立官方定价，请更正此处并回归。"
+
+[claude-opus-4-7]
+display = "Claude Opus 4.7"
+match = ["claude-opus-4.7"]
+official_input = 5.00
+official_output = 25.00
+context = "1M"
+source = "https://openrouter.ai/api/v1/models (anthropic/claude-opus-5); same tier"
+retrieved = "2026-09-15"
+note = "官方基准取同档价。如该型号有独立官方定价，请更正此处并回归。"
+
+[claude-opus-4-6]
+display = "Claude Opus 4.6"
+match = ["claude-opus-4.6"]
+official_input = 5.00
+official_output = 25.00
+context = "1M"
+source = "https://openrouter.ai/api/v1/models (anthropic/claude-opus-5); same tier"
+retrieved = "2026-09-15"
+note = "官方基准取同档价。如该型号有独立官方定价，请更正此处并回归。"
+
+[claude-fable-5]
+display = "Claude Fable 5"
+match = ["claude-fable-5"]
+official_input = 10.00
+official_output = 50.00
+official_cache_read = 0.25
+official_cache_write = 12.50
+context = "1M"
+source = "https://openrouter.ai/api/v1/models (anthropic/claude-fable-5)"
+retrieved = "2026-09-15"
+
+# --- non-Claude models -------------------------------------------------------
+# No verified official baseline yet, so these entries only place each platform's
+# price on the same row. The table states plainly that a markup multiple cannot
+# be computed rather than inventing a baseline.
+
+[gemini-3.7-flash]
+display = "Gemini 3.7 Flash"
+match = ["gemini-3.7-flash", "gemini-3.7-flash-*"]
+context = "1M"
+
+[gemini-3.6-flash]
+display = "Gemini 3.6 Flash"
+match = ["gemini-3.6-flash"]
+context = "1M"
+
+[gemini-3.5-flash]
+display = "Gemini 3.5 Flash"
+match = ["gemini-3.5-flash"]
+context = "1M"
+
+[gpt-5.6-terra]
+display = "GPT-5.6 Terra"
+match = ["gpt-5.6-terra"]
+context = "1.1M"

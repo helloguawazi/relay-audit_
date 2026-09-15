@@ -154,6 +154,46 @@ results/<date>/
 
 ---
 
+## `catalog`: published price comparison
+
+Separate from the audit. `catalog` collects what each provider *publishes* about its prices, normalises the currencies and model names, and renders a comparison table.
+
+```bash
+# see what each provider publishes, and exactly how it was probed
+python -m relay_audit catalog --out results/catalog --fx 7.1
+
+# dump a raw sample of each /models payload, for writing manual [[rates]] blocks
+python -m relay_audit catalog --probe
+```
+
+Three rules make the output trustworthy:
+
+1. **A price is never inferred.** A provider that publishes no prices yields `未采集到`. One invented figure would invalidate the whole table, because the table's only value is that every cell traces to a source.
+2. **The currency is declared, not guessed.** `currency = "CNY"` in `config.toml`. Reading a CNY figure as USD is wrong by the exchange rate — during development this produced a 7.50× markup on a service whose real markup was 1.06×. The tool did not silently guess; it reported the configured value.
+3. **Multi-route models disclose the spread.** A relay may expose several upstream routes at different prices, where the top-level figure is merely the cheapest. The table shows the route count and the input/output range rather than quietly reporting the best-looking number.
+
+For providers that only show prices inside a logged-in dashboard, declare them by hand. The block is deliberately verbose so that a published table can be traced back to a person, a date and a source:
+
+```toml
+[[rates]]
+endpoint = "peer"
+model = "claude-sonnet-5"
+input = 2.20
+output = 11.00
+currency = "USD"
+retrieved = "2026-09-15"
+note = "价格取自登录后控制台"
+```
+
+### Comparison against the official baseline
+
+`catalog` compares each provider's price against a reference rate declared in `models.toml`. Two things matter here:
+
+- **The reference must be sourced and dated.** Every entry carries `source` and `retrieved`. An entry without both is flagged, and an entry with no `official_*` values produces an explicit "cannot compute a markup multiple" note instead of a fabricated baseline.
+- **Pick the baseline deliberately.** Third-party relays often publish per-route pricing for their own upstream channels, which is not the same thing as the vendor's list price. Decide which baseline you are comparing against, and state it in the document you publish — a table that silently switches baselines between rows is misleading even when every individual number is correct.
+
+---
+
 ## Test design
 
 ### 1. Speed (`--only speed`)

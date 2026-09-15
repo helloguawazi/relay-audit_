@@ -65,9 +65,22 @@ base_url = "https://www.relay-api.com/v1"
 key_env = "RELAY_A_KEY"
 model = "claude-sonnet-5"
 enabled = true
-# Published list price, CNY per million tokens converted at ~7.1 CNY/USD.
-# Replace with the figures from your own dashboard and record the retrieval date.
-# rate = { input = 0.28, output = 1.41, cache_read = 0.03 }
+# This relay publishes its prices in CNY. The currency must be declared, never
+# inferred: a CNY figure read as USD is off by the exchange rate, which would
+# misreport this table as a 7x markup. Pin the rate with --fx if you do not
+# want the live lookup.
+currency = "CNY"
+
+# Optional: override the collected price with figures read from your own
+# dashboard. Use this when the platform does not publish prices publicly.
+# [[rates]]
+# endpoint = "peer"
+# model = "claude-sonnet-5"
+# input = 2.20
+# output = 11.00
+# currency = "USD"
+# retrieved = "2026-09-15"
+# note = "价格取自登录后控制台，截图见 results/"
 
 [[endpoint]]
 id = "peer"

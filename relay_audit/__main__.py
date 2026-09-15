@@ -7,14 +7,16 @@ import json
 import sys
 from pathlib import Path
 
-from .config import ConfigError, load_config
+from .config import ConfigError, load_config, load_models
 from . import __version__
+from .catalog import build_catalog, render_markdown, utcnow as catalog_utcnow
 from .report import build_env, build_report, cost_accounting, utcnow, write_outputs
 from .suites import SUITES
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG = ROOT / "config.toml"
 DEFAULT_RATES = ROOT / "rates.toml"
+DEFAULT_MODELS = ROOT / "models.toml"
 DEFAULT_ENV = ROOT / ".env"
 
 DEMO_BEHAVIOR = {
@@ -156,6 +158,110 @@ def cmd_run(args) -> int:
     return 0
 
 
+def cmd_catalog(args) -> int:
+    # keys_optional: the catalog reads publicly published prices, and many
+    # relays expose their price list without authentication.
+    cfg = load_config(
+        Path(args.config),
+        Path(args.rates),
+        Path(args.env_file),
+        demo=False,
+        only_ids=args.endpoint,
+        include_disabled=args.include_disabled,
+        keys_optional=True,
+    )
+    specs = load_models(Path(getattr(args, "models", DEFAULT_MODELS)))
+
+    print(f"relay-audit {__version__} · catalog")
+    print(f"collecting from {len(cfg.endpoints)} endpoint(s) plus the public reference")
+    print()
+
+    data = build_catalog(cfg, specs, cfg.manual_rates, args.fx)
+
+    for entry in data["probe_log"]:
+        print(f"  {entry}")
+    print()
+
+    providers = []
+    from .catalog import ProviderResult, ModelPrice  # local import for typing clarity
+
+    for p in data["providers"]:
+        res = ProviderResult(
+            provider_id=p["provider_id"],
+            label=p["label"],
+            role=p["role"],
+            base_url=p["base_url"],
+            collected_at=p["collected_at"],
+            status=p["status"],
+            error=p["error"],
+            probe_log=p["probe_log"],
+            raw_sample=p.get("raw_sample"),
+        )
+        res.unmatched = p["unmatched"]
+        for m in p["models"]:
+            res.models.append(
+                ModelPrice(
+                    model_id=m["model_id"],
+                    canonical=m["canonical"],
+                    variant=m["variant"],
+                    display=m["display"],
+                    input_usd=m["input_usd_per_mtok"],
+                    output_usd=m["output_usd_per_mtok"],
+                    cache_read_usd=m["cache_read_usd_per_mtok"],
+                    cache_write_usd=m["cache_write_usd_per_mtok"],
+                    currency_native=m["native_currency"],
+                    native_input=m["native_input"],
+                    native_output=m["native_output"],
+                    source=m["source"],
+                    note=m["note"],
+                    route_count=m.get("route_count", 1),
+                    input_spread=tuple(m["input_spread"]) if m.get("input_spread") else None,
+                    output_spread=tuple(m["output_spread"]) if m.get("output_spread") else None,
+                )
+            )
+        providers.append(res)
+        state = p["status"] if p["status"] == "ok" else p["status"].upper()
+        print(f"  {p['label']:28s} {state:12s} matched={len(p['models']):3d} unmatched={len(p['unmatched']):3d}")
+
+    print()
+    if args.probe:
+        for p in providers:
+            if p.raw_sample:
+                print(f"--- raw sample: {p.label} ({p.base_url}) ---")
+                print(p.raw_sample[:1200])
+                print()
+
+    title = args.title
+    md = render_markdown(providers, specs, data["fx"]["note"], data["generated_at"], title)
+
+    out_dir = Path(args.out) if args.out else ROOT / "results" / "catalog"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "catalog.md").write_text(md, encoding="utf-8")
+    (out_dir / "catalog.json").write_text(
+        json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+
+    unavailable = [p.label for p in providers if p.status != "ok"]
+    print("wrote:")
+    print(f"  markdown  {out_dir / 'catalog.md'}")
+    print(f"  json      {out_dir / 'catalog.json'}")
+    print()
+    if unavailable:
+        print("could not collect prices for:")
+        for label in unavailable:
+            print(f"  - {label}")
+        print()
+        print(
+            "This is expected for relays that only show prices inside a logged-in\n"
+            "dashboard. Run with --probe to see the raw payload, then declare the\n"
+            "rates by hand in config.toml as [[rates]] blocks. Do not guess: a table\n"
+            "with invented numbers is worthless."
+        )
+    else:
+        print("all providers returned collectable price data.")
+    return 0
+
+
 def _load(args):
     return load_config(
         Path(args.config),
@@ -192,6 +298,22 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--out", default=None, help="output directory")
     p_run.add_argument("--seed", type=int, default=20260915, help="seed for deterministic prompt generation")
     p_run.set_defaults(func=cmd_run)
+
+    p_cat = sub.add_parser(
+        "catalog",
+        help="collect published prices from each provider and render a comparison table",
+    )
+    common(p_cat)
+    p_cat.add_argument("--models", default=str(DEFAULT_MODELS), help="path to models.toml")
+    p_cat.add_argument("--out", default=None, help="output directory")
+    p_cat.add_argument("--fx", type=float, default=None, help="USD->CNY rate; overrides the live lookup")
+    p_cat.add_argument("--title", default="Claude 中转站价格对比表", help="table title")
+    p_cat.add_argument(
+        "--probe",
+        action="store_true",
+        help="print a raw sample of each /models payload, for writing manual [[rates]] blocks",
+    )
+    p_cat.set_defaults(func=cmd_catalog)
 
     args = parser.parse_args(argv)
     try:

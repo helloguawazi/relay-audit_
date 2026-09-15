@@ -43,6 +43,10 @@ class Endpoint:
     key_env: str
     model: str
     enabled: bool = True
+    # Currency the endpoint publishes its prices in. Never inferred: a CNY
+    # figure misread as USD is wrong by the exchange rate, and a comparison
+    # table with a 7x error is worse than no table.
+    currency: str = "USD"
     # Optional: the rate this endpoint charges, used for markup comparison.
     rate: dict | None = None
     api_key: str | None = field(default=None, repr=False)
@@ -72,6 +76,9 @@ class Config:
     tests: TestParams
     endpoints: list[Endpoint]
     official_rates: dict
+    # Per-endpoint rates declared by hand. Authoritative when a provider
+    # publishes prices only inside a logged-in dashboard.
+    manual_rates: dict = field(default_factory=dict)
     demo: bool = False
 
     def by_role(self, role: str) -> list[Endpoint]:
@@ -116,6 +123,13 @@ def load_rates(path: Path) -> dict:
     return data
 
 
+def load_models(path: Path) -> dict:
+    """Canonical model catalogue: display names, match patterns, official rates."""
+    if not path.exists():
+        raise ConfigError(f"model catalogue not found: {path}")
+    return tomllib.loads(path.read_text(encoding="utf-8"))
+
+
 def load_config(
     config_path: Path,
     rates_path: Path | None = None,
@@ -123,6 +137,7 @@ def load_config(
     demo: bool = False,
     only_ids: list[str] | None = None,
     include_disabled: bool = False,
+    keys_optional: bool = False,
 ) -> Config:
     if not config_path.exists():
         raise ConfigError(f"config file not found: {config_path}")
@@ -146,6 +161,7 @@ def load_config(
             key_env=item["key_env"],
             model=item["model"],
             enabled=item.get("enabled", True),
+            currency=str(item.get("currency", "USD")).upper(),
             rate=item.get("rate"),
             demo=demo,
         )
@@ -157,6 +173,12 @@ def load_config(
         if ep.protocol not in VALID_PROTOCOLS:
             raise ConfigError(
                 f"endpoint '{ep.id}': protocol must be one of {VALID_PROTOCOLS}, got '{ep.protocol}'"
+            )
+        if ep.currency not in ("USD", "CNY"):
+            raise ConfigError(
+                f"endpoint '{ep.id}': currency must be USD or CNY, got '{ep.currency}'. "
+                f"It is declared, never inferred, because guessing it wrong multiplies "
+                f"every price in that row by the exchange rate."
             )
         if not ep.base_url.startswith("http"):
             raise ConfigError(f"endpoint '{ep.id}': base_url must be an absolute URL")
@@ -178,7 +200,7 @@ def load_config(
         # run was launched, a disabled endpoint must not be contacted.
         endpoints = [e for e in endpoints if e.enabled]
 
-    if not demo:
+    if not demo and not keys_optional:
         missing = [e for e in endpoints if not e.api_key]
         if missing:
             listing = "\n".join(f"  - {e.id:12s} needs {e.key_env}" for e in missing)
@@ -188,6 +210,12 @@ def load_config(
                 "shell, or run with --demo to validate the harness without spending money."
             )
 
+    if keys_optional:
+        # The catalog only reads publicly published prices, so a missing key is
+        # not an error there: many relays expose their price list without auth.
+        # No flag is set here; the catalog probe simply omits the auth header.
+        pass
+
     if not any(e.role == "reference" for e in endpoints):
         raise ConfigError(
             "no endpoint with role='reference'. A comparison without a reference "
@@ -196,11 +224,27 @@ def load_config(
     if not any(e.role == "candidate" for e in endpoints):
         raise ConfigError("no endpoint with role='candidate'.")
 
+    manual_rates: dict = {}
+    for entry in raw.get("rates", []):
+        ep_id = entry.get("endpoint")
+        if not ep_id:
+            raise ConfigError("every [[rates]] block needs an `endpoint` field")
+        manual_rates.setdefault(ep_id, {})[entry["model"]] = {
+            "input": entry.get("input"),
+            "output": entry.get("output"),
+            "cache_read": entry.get("cache_read"),
+            "cache_write": entry.get("cache_write"),
+            "currency": entry.get("currency", "USD"),
+            "retrieved": entry.get("retrieved", "no date"),
+            "note": entry.get("note"),
+        }
+
     return Config(
         name=meta.get("name", config_path.stem),
         stale_after_days=int(meta.get("stale_after_days", 14)),
         tests=tests,
         endpoints=endpoints,
         official_rates=load_rates(rates_path) if rates_path else {},
+        manual_rates=manual_rates,
         demo=demo,
     )
