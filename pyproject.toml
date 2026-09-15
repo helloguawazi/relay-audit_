@@ -1,0 +1,21 @@
+[project]
+name = "relay-audit"
+version = "0.1.0"
+description = "Reproducible audit tool for LLM API relays: cache honesty, billing honesty, latency and cost"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["httpx>=0.25"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "tiktoken>=0.7"]
+
+[project.scripts]
+relay-audit = "relay_audit.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["relay_audit"]

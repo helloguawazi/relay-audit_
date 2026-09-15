@@ -1,0 +1,80 @@
+[meta]
+# Identifies this run configuration in the report.
+name = "relay-audit default"
+# Report warns when a result set is older than this many days.
+stale_after_days = 14
+
+[tests]
+# Warm-up requests, discarded from statistics.
+warmup = 2
+
+# --- speed suite ---
+speed_requests = 15
+speed_max_tokens = 8
+speed_prompt_tokens = 120          # approximate; filler text is generated deterministically
+
+# --- cache suite ---
+cache_prefix_tokens = 3000         # must be above the provider's minimum cacheable prefix
+cache_max_tokens = 8
+cache_warm_passes = 3              # repeat the identical request this many times
+cache_ttl_seconds = 300            # wait this long before the "expired" pass; 0 disables pass C
+cache_min_speedup_ratio = 1.15     # warm TTFT must be at least this much faster to count as physical evidence
+
+# --- billing suite ---
+billing_tolerance_pct = 15.0       # allowed drift between the local tokenizer and reported prompt_tokens
+
+# --- per-request network behaviour ---
+timeout_seconds = 120
+
+# Retries are intentionally fixed at 0. A retry hides a failure, and the failure
+# rate is itself one of this tool's findings.
+max_retries = 0
+
+# Requests are always issued strictly sequentially. Concurrent requests contend
+# for the same upstream channel and would corrupt every latency number below.
+
+# ---------------------------------------------------------------------------
+# Endpoints
+#
+# role = reference | candidate | peer
+#   reference : a first-party or publicly benchmarked endpoint. Required.
+#   candidate : the endpoint under audit.
+#   peer      : an independently operated relay, publicly known and actually paid for.
+#               Do not use a strawman: it is the fastest way to get a report dismissed.
+#
+# `rate` is what the endpoint charges, USD per million tokens. Omit it to fall
+# back to the published official rate in rates.toml.
+# ---------------------------------------------------------------------------
+
+[[endpoint]]
+id = "openrouter"
+label = "OpenRouter"
+role = "reference"
+protocol = "openai"
+base_url = "https://openrouter.ai/api/v1"
+key_env = "OPENROUTER_KEY"
+model = "anthropic/claude-sonnet-5"
+enabled = true
+
+[[endpoint]]
+id = "candidate"
+label = "Candidate Relay"
+role = "candidate"
+protocol = "openai"
+base_url = "https://www.relay-api.com/v1"
+key_env = "RELAY_A_KEY"
+model = "claude-sonnet-5"
+enabled = true
+# Published list price, CNY per million tokens converted at ~7.1 CNY/USD.
+# Replace with the figures from your own dashboard and record the retrieval date.
+# rate = { input = 0.28, output = 1.41, cache_read = 0.03 }
+
+[[endpoint]]
+id = "peer"
+label = "Peer Relay"
+role = "peer"
+protocol = "openai"
+base_url = "https://peer.invalid/v1"
+key_env = "PEER_KEY"
+model = "claude-sonnet-5"
+enabled = false                    # enable once a real, publicly known peer is configured
