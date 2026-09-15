@@ -101,6 +101,65 @@ def test_unmatched_is_reported_not_dropped():
     assert classify("some/other-model", SPECS) is None
 
 
+# --- the shipped catalogue -------------------------------------------------
+
+
+def test_shipped_catalogue_has_no_dotted_table_names():
+    """TOML parse guard.
+
+    `[gemini-3.7-flash]` is parsed as a nested table `gemini-3` -> `7-flash`, not
+    as a key named 'gemini-3.7-flash'. Unquoted, those entries matched nothing and
+    six models silently fell out of the first real comparison. A dotted table name
+    must appear in the file quoted.
+    """
+    from pathlib import Path
+
+    raw = Path(__file__).resolve().parent.parent / "models.toml"
+    for line in raw.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("[") or stripped.startswith("[["):
+            continue
+        name = stripped.strip("[]").strip()
+        if "." in name:
+            assert stripped.startswith('["') and stripped.endswith('"]'), (
+                f"dotted table name must be quoted: {stripped}"
+            )
+
+
+def test_shipped_catalogue_entries_are_all_reachable():
+    """Every declared spec must be matchable by at least one of its own patterns."""
+    from pathlib import Path
+
+    from relay_audit.config import load_models
+
+    specs = load_models(Path(__file__).resolve().parent.parent / "models.toml")
+    assert specs, "the shipped catalogue loaded nothing"
+    for key, spec in specs.items():
+        patterns = list(spec.get("match", [])) + list(spec.get("aliases", []))
+        assert patterns, f"{key} declares no match patterns and can never be reached"
+        assert any(matches_pattern(key, pat) for pat in patterns), (
+            f"{key}: none of its own patterns match its own key, so any provider "
+            f"publishing the model under that name would be reported as unmatched"
+        )
+        assert classify(key, specs) == key, (
+            f"{key} is shadowed by an earlier entry; matching order decides the row"
+        )
+
+
+def test_shipped_catalogue_is_sourced_and_dated_or_explicitly_not():
+    """Anything with official rates must cite a source and a date."""
+    from pathlib import Path
+
+    from relay_audit.config import load_models
+
+    specs = load_models(Path(__file__).resolve().parent.parent / "models.toml")
+    for key, spec in specs.items():
+        has_rates = spec.get("official_input") is not None or spec.get("official_output") is not None
+        if has_rates:
+            assert spec.get("source"), f"{key} declares official rates with no source"
+            assert spec.get("retrieved"), f"{key} declares official rates with no retrieval date"
+
+
 # --- price extraction -------------------------------------------------------
 
 

@@ -102,23 +102,48 @@ retrieved = "2026-09-15"
 # No verified official baseline yet, so these entries only place each platform's
 # price on the same row. The table states plainly that a markup multiple cannot
 # be computed rather than inventing a baseline.
+#
+# NOTE: table names containing a dot MUST be quoted. In TOML, `[gemini-3.7-flash]`
+# is parsed as a nested table `gemini-3` -> `7-flash`, not as one key named
+# 'gemini-3.7-flash'. Unquoted, those entries never match anything and the
+# models silently fall out of the comparison.
 
-[gemini-3.7-flash]
+["gemini-3.7-flash"]
 display = "Gemini 3.7 Flash"
-match = ["gemini-3.7-flash", "gemini-3.7-flash-*"]
+match = ["gemini-3.7-flash"]
 context = "1M"
 
-[gemini-3.6-flash]
+["gemini-3.6-flash"]
 display = "Gemini 3.6 Flash"
 match = ["gemini-3.6-flash"]
 context = "1M"
 
-[gemini-3.5-flash]
+["gemini-3.5-flash"]
 display = "Gemini 3.5 Flash"
 match = ["gemini-3.5-flash"]
 context = "1M"
 
-[gpt-5.6-terra]
+["gemini-3.5-flash-lite"]
+display = "Gemini 3.5 Flash Lite"
+match = ["gemini-3.5-flash-lite"]
+context = "1M"
+
+["gemini-3.8-flash"]
+display = "Gemini 3.8 Flash"
+match = ["gemini-3.8-flash"]
+context = "1M"
+
+["gpt-5.6-terra"]
 display = "GPT-5.6 Terra"
 match = ["gpt-5.6-terra"]
+context = "1.1M"
+
+["gpt-5.6-sol"]
+display = "GPT-5.6 Sol"
+match = ["gpt-5.6-sol"]
+context = "1.1M"
+
+["gpt-5.6-luna"]
+display = "GPT-5.6 Luna"
+match = ["gpt-5.6-luna"]
 context = "1.1M"
