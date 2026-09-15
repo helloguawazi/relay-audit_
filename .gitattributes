@@ -1,0 +1,6 @@
+# Normalise line endings so the published repo is byte-identical across platforms.
+# Shell scripts and Python must stay LF; Git for Windows would otherwise rewrite them.
+* text=auto eol=lf
+*.svg text eol=lf
+*.png binary
+*.jpg binary
