@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" width="900" height="560" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+    <style>
+      .box { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; rx: 8; }
+      .box-hi { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; rx: 8; }
+      .box-warn { fill: #fef2f2; stroke: #ef4444; stroke-width: 2; rx: 8; }
+      .box-ok { fill: #f0fdf4; stroke: #22c55e; stroke-width: 2; rx: 8; }
+      .t { fill: #0f172a; font-size: 14px; }
+      .t-sm { fill: #64748b; font-size: 12px; }
+      .t-b { fill: #0f172a; font-size: 14px; font-weight: 600; }
+      .t-title { fill: #0f172a; font-size: 19px; font-weight: 700; }
+      .t-sec { fill: #475569; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+      .mono { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 12.5px; fill: #334155; }
+      .line { stroke: #94a3b8; stroke-width: 1.5; fill: none; }
+      .line-dash { stroke: #cbd5e1; stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; }
+    </style>
+  </defs>
+
+  <rect width="900" height="560" fill="#f8fafc"/>
+  <text x="34" y="42" class="t-title">How the cache verdict is decided</text>
+  <text x="34" y="64" class="t-sm">Two independent signals must agree. A counter without a speedup is decorative.</text>
+
+  <!-- left: declared signal -->
+  <text x="34" y="104" class="t-sec">SIGNAL 1 — DECLARED</text>
+  <rect x="34" y="116" width="330" height="86" class="box"/>
+  <text x="52" y="142" class="t-b">usage.cache_read_input_tokens</text>
+  <text x="52" y="162" class="t-sm">OpenAI shape: prompt_tokens_details.cached_tokens</text>
+  <text x="52" y="184" class="mono">&gt; 0 on the warm pass  →  claims a hit</text>
+
+  <!-- right: physical signal -->
+  <text x="454" y="104" class="t-sec">SIGNAL 2 — PHYSICAL</text>
+  <rect x="454" y="116" width="412" height="86" class="box"/>
+  <text x="472" y="142" class="t-b">TTFT ratio = cold ÷ warm</text>
+  <text x="472" y="162" class="t-sm">A real cache hit skips prefill, so the warm clock must collapse</text>
+  <text x="472" y="184" class="mono">ratio ≥ 1.15  →  measurable speedup</text>
+
+  <!-- the three requests -->
+  <text x="34" y="248" class="t-sec">THE THREE PASSES</text>
+  <rect x="34" y="262" width="256" height="72" class="box"/>
+  <text x="52" y="288" class="t-b">Pass A — cold</text>
+  <text x="52" y="308" class="t-sm">unique prefix, cache_write &gt; 0 expected</text>
+  <text x="52" y="326" class="mono">ttft_cold</text>
+
+  <rect x="322" y="262" width="256" height="72" class="box-hi"/>
+  <text x="340" y="288" class="t-b">Pass B × N — warm</text>
+  <text x="340" y="308" class="t-sm">byte-identical prefix, immediately after</text>
+  <text x="340" y="326" class="mono">ttft_warm, cache_read</text>
+
+  <rect x="610" y="262" width="256" height="72" class="box"/>
+  <text x="628" y="288" class="t-b">Pass C — after TTL</text>
+  <text x="628" y="308" class="t-sm">cache_read should return to 0</text>
+  <text x="628" y="326" class="mono">optional</text>
+
+  <path d="M 290 298 L 318 298" class="line" marker-end="url(#arrow)"/>
+  <path d="M 578 298 L 606 298" class="line" marker-end="url(#arrow)"/>
+
+  <!-- decision table -->
+  <text x="34" y="384" class="t-sec">DECISION</text>
+
+  <rect x="34" y="398" width="200" height="58" class="box-ok"/>
+  <text x="50" y="422" class="t-b">consistent</text>
+  <text x="50" y="442" class="t-sm">declared + physical</text>
+
+  <rect x="250" y="398" width="200" height="58" class="box-warn"/>
+  <text x="266" y="422" class="t-b">counter-only</text>
+  <text x="266" y="442" class="t-sm">declared only  ⚠ fake</text>
+
+  <rect x="466" y="398" width="200" height="58" class="box"/>
+  <text x="482" y="422" class="t-b">speed-only</text>
+  <text x="482" y="442" class="t-sm">physical only</text>
+
+  <rect x="682" y="398" width="184" height="58" class="box"/>
+  <text x="698" y="422" class="t-b">no-cache</text>
+  <text x="698" y="442" class="t-sm">neither</text>
+
+  <path d="M 199 348 L 134 394" class="line-dash"/>
+  <path d="M 450 348 L 350 394" class="line-dash"/>
+  <path d="M 450 348 L 566 394" class="line-dash"/>
+  <path d="M 738 348 L 774 394" class="line-dash"/>
+
+  <text x="34" y="492" class="t-sm">Faking the counter is trivial. Faking the speedup costs real money — that asymmetry is why both signals are required.</text>
+  <text x="34" y="514" class="t-sm">A relay that serves a real cache while reporting zero hits is merely leaving money on the table, which is why speed-only is not treated as fraud.</text>
+  <rect x="34" y="532" width="832" height="2" fill="#e2e8f0"/>
+</svg>

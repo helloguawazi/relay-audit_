@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" width="900" height="420" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+    <style>
+      .b { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; rx: 8; }
+      .b-ref { fill: #f8fafc; stroke: #94a3b8; stroke-width: 1.5; rx: 8; }
+      .b-cand { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; rx: 8; }
+      .t-b { fill: #0f172a; font-size: 14px; font-weight: 600; }
+      .t-sm { fill: #64748b; font-size: 11.5px; }
+      .t-title { fill: #0f172a; font-size: 19px; font-weight: 700; }
+      .t-sec { fill: #475569; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+      .mono { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 11.5px; fill: #334155; }
+      .line { stroke: #94a3b8; stroke-width: 1.5; fill: none; }
+    </style>
+  </defs>
+
+  <rect width="900" height="420" fill="#f8fafc"/>
+  <text x="34" y="40" class="t-title">relay-audit: one request shape, three endpoints</text>
+  <text x="34" y="62" class="t-sm">Identical body, identical model, identical runner. Only the base URL and key change — that is what makes the comparison legitimate.</text>
+
+  <!-- three endpoints -->
+  <rect x="34" y="92" width="248" height="104" class="b-ref"/>
+  <text x="52" y="118" class="t-b">reference</text>
+  <text x="52" y="138" class="t-sm">a first-party or publicly</text>
+  <text x="52" y="154" class="t-sm">benchmarked endpoint</text>
+  <text x="52" y="178" class="mono">role = "reference"</text>
+
+  <rect x="326" y="92" width="248" height="104" class="b-cand"/>
+  <text x="344" y="118" class="t-b">candidate</text>
+  <text x="344" y="138" class="t-sm">the endpoint under audit</text>
+  <text x="344" y="160" class="mono">role = "candidate"</text>
+  <text x="344" y="180" class="t-sm">including where it loses</text>
+
+  <rect x="618" y="92" width="248" height="104" class="b"/>
+  <text x="636" y="118" class="t-b">peer</text>
+  <text x="636" y="138" class="t-sm">independently operated,</text>
+  <text x="636" y="154" class="t-sm">publicly known, really paid for</text>
+  <text x="636" y="178" class="mono">role = "peer"</text>
+
+  <path d="M 158 196 L 158 232 L 450 232" class="line"/>
+  <path d="M 450 196 L 450 232" class="line"/>
+  <path d="M 742 196 L 742 232 L 450 232" class="line"/>
+  <path d="M 450 232 L 450 262" class="line" marker-end="url(#a2)"/>
+
+  <!-- suites -->
+  <rect x="34" y="268" width="832" height="66" class="b"/>
+  <text x="52" y="292" class="t-b">Three suites</text>
+  <text x="52" y="314" class="t-sm">speed — TTFT p50/p90/p99, tokens/sec, and the failure count itself</text>
+  <text x="470" y="314" class="t-sm">cache — cold → warm ×N → after TTL</text>
+  <text x="52" y="330" class="t-sm">billing — token reconciliation, impossible-request probes, model-id echo</text>
+  <text x="470" y="330" class="t-sm">retries fixed at 0 · requests strictly sequential</text>
+
+  <path d="M 450 334 L 450 356" class="line" marker-end="url(#a2)"/>
+
+  <!-- outputs -->
+  <rect x="34" y="362" width="832" height="44" class="b"/>
+  <text x="52" y="389" class="mono">raw.json · findings.json · env.json (vantage point) · report.md (with limitations)</text>
+</svg>
