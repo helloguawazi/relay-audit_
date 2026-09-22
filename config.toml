@@ -76,17 +76,16 @@ currency = "USD"
 
 [[endpoint]]
 id = "candidate"
-label = "Candidate Relay"
+label = "Relay"
 role = "candidate"
 protocol = "openai"
 base_url = "https://www.relay-api.com/v1"
 key_env = "RELAY_A_KEY"
 model = "claude-sonnet-5"
 enabled = true
-# This relay publishes its prices in CNY. The currency must be declared, never
-# inferred: a CNY figure read as USD is off by the exchange rate, which would
-# misreport this table as a 7x markup. Pin the rate with --fx if you do not
-# want the live lookup.
+# This endpoint publishes its prices in CNY. The currency must be declared,
+# never inferred: a CNY figure read as USD is off by the exchange rate, and
+# that exact mistake once turned a 1.06x markup into an apparent 7.50x one.
 currency = "CNY"
 
 # Optional: override the collected price with figures read from your own
