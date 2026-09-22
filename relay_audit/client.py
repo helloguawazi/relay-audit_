@@ -107,9 +107,18 @@ class Result:
         return d
 
 
+def is_messages_protocol(protocol: str) -> bool:
+    """True for protocols that speak the Anthropic Messages shape.
+
+    Microsoft Foundry keeps the Messages payload and usage fields but swaps the
+    auth header and base path, so the payload and usage logic is shared.
+    """
+    return protocol in ("anthropic", "azure")
+
+
 def build_request(ep: Endpoint, prompt: str, max_tokens: int, stream: bool, model: str | None = None) -> dict:
     model = model or ep.model
-    if ep.protocol == "anthropic":
+    if is_messages_protocol(ep.protocol):
         body = {
             "model": model,
             "max_tokens": max_tokens,
@@ -146,6 +155,11 @@ def build_headers(ep: Endpoint, stream: bool = True) -> dict:
     if ep.protocol == "anthropic":
         headers["x-api-key"] = key
         headers["anthropic-version"] = "2023-06-01"
+    elif ep.protocol == "azure":
+        # Microsoft Foundry serves the Messages API but authenticates with
+        # api-key rather than a bearer token or x-api-key.
+        headers["api-key"] = key
+        headers["anthropic-version"] = "2023-06-01"
     else:
         headers["Authorization"] = f"Bearer {key}"
     return headers
@@ -162,7 +176,7 @@ def parse_usage(protocol: str, payload: dict) -> Usage:
         return Usage()
     usage = Usage(raw=u)
 
-    if protocol == "anthropic":
+    if is_messages_protocol(protocol):
         usage.input_tokens = _int(u.get("input_tokens"))
         usage.output_tokens = _int(u.get("output_tokens"))
         usage.cache_read_tokens = _int(u.get("cache_read_input_tokens"))
@@ -515,7 +529,7 @@ class Client:
 
 
 def _extract_delta(protocol: str, payload: dict) -> str:
-    if protocol == "anthropic":
+    if is_messages_protocol(protocol):
         if payload.get("type") == "content_block_delta":
             return (payload.get("delta") or {}).get("text") or ""
         if payload.get("type") == "message_start":

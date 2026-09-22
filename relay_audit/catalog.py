@@ -342,6 +342,8 @@ def probe_endpoint(
     if ep.api_key:
         if ep.protocol == "anthropic":
             headers = {"x-api-key": ep.api_key, "anthropic-version": "2023-06-01"}
+        elif ep.protocol == "azure":
+            headers = {"api-key": ep.api_key, "anthropic-version": "2023-06-01"}
         else:
             headers = {"Authorization": f"Bearer {ep.api_key}"}
 

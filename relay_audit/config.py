@@ -8,7 +8,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 VALID_ROLES = ("reference", "candidate", "peer")
-VALID_PROTOCOLS = ("openai", "anthropic")
+# "azure" is Microsoft Foundry, which serves the Claude Messages API but
+# authenticates with an `api-key` header on an /anthropic base path.
+VALID_PROTOCOLS = ("openai", "anthropic", "azure")
 
 
 class ConfigError(Exception):
@@ -56,6 +58,9 @@ class Endpoint:
     def url(self) -> str:
         if self.protocol == "anthropic":
             return self.base_url.rstrip("/") + "/messages"
+        if self.protocol == "azure":
+            # Foundry base: https://<resource>.services.ai.azure.com/anthropic
+            return self.base_url.rstrip("/") + "/v1/messages"
         return self.base_url.rstrip("/") + "/chat/completions"
 
     def require_key(self) -> str:

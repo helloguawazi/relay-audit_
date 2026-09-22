@@ -56,6 +56,24 @@ key_env = "OPENROUTER_KEY"
 model = "anthropic/claude-sonnet-5"
 enabled = true
 
+# Microsoft Foundry serves the Claude Messages API on an /anthropic base path
+# and authenticates with an `api-key` header. Billing rolls up into Claude
+# Consumption Units, but the underlying cost is Anthropic's published per-model
+# token rate, so the price axis stays comparable with the other endpoints.
+# Base URL form: https://<resource-name>.services.ai.azure.com/anthropic
+# `model` must be the DEPLOYMENT name, which can differ from the model id.
+[[endpoint]]
+id = "foundry"
+label = "Microsoft Foundry"
+role = "peer"
+protocol = "azure"
+base_url = "https://YOUR-RESOURCE.services.ai.azure.com/anthropic"
+key_env = "FOUNDRY_KEY"
+model = "claude-sonnet-5"
+enabled = false                    # enable once the Azure resource is deployed
+# Foundry bills in USD at Anthropic's published token rates.
+currency = "USD"
+
 [[endpoint]]
 id = "candidate"
 label = "Candidate Relay"
@@ -74,13 +92,13 @@ currency = "CNY"
 # Optional: override the collected price with figures read from your own
 # dashboard. Use this when the platform does not publish prices publicly.
 # [[rates]]
-# endpoint = "peer"
+# endpoint = "foundry"
 # model = "claude-sonnet-5"
-# input = 2.20
-# output = 11.00
+# input = 2.00
+# output = 10.00
 # currency = "USD"
 # retrieved = "2026-09-15"
-# note = "价格取自登录后控制台，截图见 results/"
+# note = "Foundry bills in CCU converted at Anthropic's published token rates"
 
 [[endpoint]]
 id = "peer"
