@@ -3,8 +3,17 @@ __pycache__/
 .venv/
 venv/
 .env
-results/
 *.egg-info/
 build/
 dist/
 .pytest_cache/
+
+# Working output. Not published, because a run directory is scratch: it mixes
+# synthetic demo runs with real ones, and its timings are only valid for the
+# runner that produced them.
+results/
+
+# Published snapshots live in data/published/ and ARE tracked. That is the
+# whole point: a price table is only defensible if the reader can open the raw
+# JSON behind every cell. Deliberately not ignored.
+!data/published/

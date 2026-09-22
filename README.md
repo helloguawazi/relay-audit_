@@ -6,6 +6,10 @@ Most relay benchmarks only measure speed. Speed is the least interesting number 
 
 `relay-audit` measures the things you can actually verify, and it publishes its own methodology so anyone can re-run it and get the same numbers.
 
+**→ [`data/published/`](data/published/) holds the raw collected data behind every published price table.** Nothing there is hand-edited.
+
+> **Declared interest.** The maintainer of this repository also operates one of the endpoints that appears in the published snapshots, under the `candidate` role. That endpoint's rows are included *including* the models where it is more expensive than the reference. Re-run the collector rather than trusting the snapshot.
+
 ```
                        same request body, same model, one runner
                                         │
