@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 912" width="900" height="912" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
 <rect width="900" height="912" fill="#f8fafc"/>
 <text x="34" y="40" font-size="19" font-weight="700" fill="#0f172a">Input price vs the official baseline</text>
-<text x="34" y="62" font-size="12" fill="#64748b">Candidate Relay compared with OpenRouter, USD per million input tokens. Collected 2026-09-15T05:50:41Z.</text>
+<text x="34" y="62" font-size="12" fill="#64748b">Candidate Relay compared with OpenRouter, USD per million input tokens. Collected 2026-09-22T13:33:47Z.</text>
 <text x="34" y="80" font-size="12" fill="#64748b">Bars show the ratio. Left of centre is cheaper than the baseline, right is more expensive.</text>
 <line x1="495.0" y1="78" x2="495.0" y2="608" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4"/>
 <text x="495.0" y="72" font-size="11" fill="#64748b" text-anchor="middle">1.00× official</text>
